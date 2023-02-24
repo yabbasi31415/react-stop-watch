@@ -88,3 +88,7 @@ ul.no-bullets {
 .gray-text {
   color: gray;
 }
+
+.subscript-timer {
+  font-size:40px;
+}

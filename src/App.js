@@ -1,12 +1,34 @@
 import './App.css';
-import {useState} from 'react';
+import { useEffect, useState } from "react";
 
-function Buttons() {
-  const [cls,setCls]=useState({});
+const MillisecondTimer = () => {
+  const [millisec, setMillisec] = useState(0);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMillisec(millisec => millisec+1);
+    }, 1);
+    return () => clearInterval(interval);
+  }, []);
+
+  let ms = millisec % 1000;
+  let sec = pad (parseInt (millisec / 100 % 60, 10));
+  let min = pad (parseInt (millisec / (60 * 100), 10));
+  let hrs = pad (parseInt (millisec / (3600 * 100), 10));
+  
+
+  return (
+    <>
+    <p><span>{hrs}</span>:<span>{min}</span>:<span>{sec}</span>.<span>{ms % 10}</span><span className='subscript-timer'>{ms}</span></p>
+    </>
+  );
+};
+
+function Buttons({setDisplay}) {
+ 
   const [classes,setClasses]=useState({'start':'enable-start-btn','split':'disable-btn', 'reset':'disable-btn'});
  
-  console.log("Init " + classes.start + " " + classes.split + " " + classes.reset);
+  // console.log("Init " + classes.start + " " + classes.split + " " + classes.reset);
 
   const [value, setValue]=useState('Start');
 
@@ -19,7 +41,9 @@ function Buttons() {
         setValue('Pause');
         
         setClasses(classes => ({start:'enable-pause-btn',split:'enable-split-btn', reset:'disable-btn'}));
-        console.log("OnBtn " + classes.start + " " + classes.split + " " + classes.reset);
+        // console.log("OnBtn " + classes.start + " " + classes.split + " " + classes.reset);
+
+        ManageTimer(event, {setDisplay});
         
       }
       else
@@ -47,82 +71,40 @@ function Buttons() {
   
 }
 
-function Start() {
-  const [cls,setCls]=useState('enable-start-btn');
-  const [value, setValue]=useState('Start');
-  const [btn, setBtn]=useState('');
+function ManageTimer(event, {setDisplay})
+{
+  // const [disp, setDisp] = useState(['00',':','00',':','00','.','00']);
+  // const [tmr, setTmr] = useState(0);
+  // setTmr(tmr+1);
 
-  function handleClick()
-  {
-    if (value == 'Start') {
-      setValue('Pause');
-      setCls('enable-pause-btn'); 
-      setBtn(<Split value={'event-pause'} />);
-    }
-    else
-    {
-      setValue('Start');
-      setCls('enable-start-btn'); 
-    }
-  }
+  // setInterval(setTmr(tmr+1), 1);
 
-  return (   
-    <>
-      <button className={cls} onClick={()=>handleClick()}>{value}</button>
-    </>
-    );
+  // const interval = setInterval(setTimer(timer+1), 1);
+      // ms = ++timerCounter % 1000;
+      // sec = pad (parseInt (timerCounter / 100 % 60, 10));
+      // min = pad (parseInt (timerCounter / (60 * 100), 10));
   
-}
+  
+  // setDisp(disp[6] = setTimer(timer+1) % 1000);
+  // disp[4] = pad (parseInt (timer / (100 % 60), 10));
+  // disp[2] = pad (parseInt (timer / (60 * 100), 10));
+  // disp[0] = pad (parseInt (timer / (3600 * 100), 10));
 
-function Split({value}) {
-  const [cls,setCls]=useState('disable-btn');
+  // useEffect(() => {
+  //   const timer = setInterval(() => {
+  //     setTimer();
+  //   }, 1000);
+  // });
+    // return (<IntervalExample />);
+  
+      // setDisplay([count[0],':',count[2],':',count[4],'.',count[6]]);
+    
+      // let timeLapsedArr = [hrs, min, sec, ms, timerCounter];
 
-  if ({value} == 'event-pause')
-  {
-    console.log({value});
-    setCls('enable-split-btn');
-  }
+  // let interval = setInterval (startTimer({timer, setTimer}), 1);
 
-  function handleClick()
-  {
-    // setCls('enable-split-btn');
-  }
-
-  return (
-    <>
-      <button className={cls} onClick={()=>handleClick()}>Split</button>
-    </>
-  );
-}
-
-function Reset() {
-  const [cls,setCls]=useState('disable-btn');
-
-  function handleClick()
-  {
-    // setCls('enable-split-btn');
-  }
-
-  return (
-    <>
-      <button className={cls} onClick={()=>handleClick()}>Reset</button>
-    </>
-  );
-}
-
-function startTimer(count)
-{
-  return ['00',':','50',':','00','.','50'];
-}
-
-function handleClick (i) {
-  console.log("Button clicked " + i);
-  return <Start value={'Pause'} />;
-}
-
-function handleStartClick (value)
-{
-
+  // console.log(interval);
+   
 }
 
 
@@ -132,9 +114,9 @@ export default function StopWatch () {
 
   return (
     <>
-    <p> {display} </p>
-
-    <Buttons />
+    {/* <p> {display} </p> */}
+    <MillisecondTimer />
+    <Buttons value={setDisplay}/>
     </>
   );
 }

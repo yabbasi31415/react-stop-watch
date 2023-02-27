@@ -1,122 +1,30 @@
 import "./App.css";
 import { useEffect, useState } from "react";
+import "react-data-grid/lib/styles.css";
+import DataGrid from "react-data-grid";
 
 const Clock = (props) => {
-  const [timeCount, setTimeCount] = useState(0);
-
   useEffect(() => {
     const interval = setInterval(() => {
-      setTimeCount((timeCount) => timeCount + (props.state === "Start" && 1));
-      setTimeCount(
+      props.setTimeCount(
+        (timeCount) =>
+          timeCount +
+          ((props.state === "Start" || props.state === "Split") && 1)
+      );
+      props.setTimeCount(
         (timeCount) => timeCount * (1 - (props.state === "Reset" && 1))
       );
     }, 1);
     return () => clearInterval(interval);
-  }, [props.state]);
+  }, [props]);
 
   return (
     <>
-      <SetDisplay timeCount={timeCount} />
-      <SetMiniDisplay state={props.state} timeCount={timeCount} />
+      <SetDisplay timeCount={props.timeCount} />
+      <SetMiniDisplay state={props.state} timeCount={props.timeCount} />
     </>
   );
 };
-
-/* 
-
-const MillisecondTimer = (props) => {
-  const [millisec, setMillisec] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setMillisec((millisec) => millisec + (props.name == "Start" && 1));
-    }, 1);
-    return () => clearInterval(interval);
-  }, [props.name]);
-
-  // console.log("Value: " + props.name);
-
-  let ms = millisec % 1000;
-  let sec = pad(parseInt((millisec / 100) % 60, 10));
-  let min = pad(parseInt(millisec / (60 * 100), 10));
-  let hrs = pad(parseInt(millisec / (3600 * 100), 10));
-
-  return DisplayClock({millisec});
-
-  // return (
-  //   <>
-  //     <p>
-  //       <span>{hrs}</span>:<span>{min}</span>:<span>{sec}</span>.
-  //       <span>{ms % 10}</span>
-  //       <span className="subscript-timer">{ms}</span>
-  //     </p>
-  //   </>
-  // );
-};
-
-function Buttons() {
-  const [classes, setClasses] = useState({
-    start: "enable-start-btn",
-    split: "disable-btn",
-    reset: "disable-btn",
-  });
-
-  // console.log("Init " + classes.start + " " + classes.split + " " + classes.reset);
-
-  const [value, setValue] = useState("Start");
-  const [buttonstate, setButtonstate] = useState("Init");
-
-  function handleClick(event) {
-    if (event == "Start") {
-      if (value == "Start") {
-        setValue("Pause");
-        setButtonstate("Start");
-
-        setClasses((classes) => ({
-          start: "enable-pause-btn",
-          split: "enable-split-btn",
-          reset: "disable-btn",
-        }));
-        // console.log("OnBtn " + classes.start + " " + classes.split + " " + classes.reset);
-      } else {
-        setValue("Start");
-        setButtonstate("Pause");
-        setClasses((classes) => ({
-          start: "enable-start-btn",
-          split: "disable-btn",
-          reset: "enable-reset-btn",
-        }));
-      }
-    } else if (event == "Reset") {
-      setValue("Start");
-      setButtonstate("Reset");
-      setClasses((classes) => ({
-        start: "enable-start-btn",
-        split: "disable-btn",
-        reset: "enable-reset-btn",
-      }));
-    } else {
-      setButtonstate("Split");
-    }
-  }
-
-  return (
-    <>
-      <MillisecondTimer name={buttonstate} />
-      <button className={classes.start} onClick={() => handleClick("Start")}>
-        {value}
-      </button>
-      <button className={classes.split} onClick={() => handleClick("Split")}>
-        Split
-      </button>
-      <button className={classes.reset} onClick={() => handleClick("Reset")}>
-        Reset
-      </button>
-    </>
-  );
-}
-
-*/
 
 function formatTime(timeCount) {
   const ms = timeCount % 1000;
@@ -174,14 +82,17 @@ const Button = (props) => {
   );
 };
 
-function StartClicked(
+function startClicked(
   startButton,
   setStartButton,
   splitButton,
   setSplitButton,
   resetButton,
   setResetButton,
-  setState
+  setState,
+  timeCount,
+  log,
+  setLog
 ) {
   const setPause = () => {
     setStartButton({ ...startButton, id: "Pause", class: "enable-pause-btn" });
@@ -203,17 +114,46 @@ function StartClicked(
       isDisabled: false,
     });
     setState("Pause");
+    setLog({
+      index: log.index + 1,
+      clock: Object.values(formatTime(timeCount)).join(":"),
+      event: "Pause",
+    });
   };
 
   startButton.id === "Start" ? setPause() : setStart();
 }
 
-function SplitClicked(splitButton, setSplitButton) {
-  console.log("Log table started");
+function splitClicked(splitButton, setSplitButton, timeCount, log, setLog) {
+  setLog({
+    index: log.index + 1,
+    clock: Object.values(formatTime(timeCount)).join(":"),
+    event: "Split",
+  });
+
+  console.log(
+    "Log entry: " + log.index + " " + log.clock + " " + " " + log.event
+  );
 }
 
-function ResetClicked(resetButton, setResetButton) {
+function resetClicked(resetButton, setResetButton, timeCount, log, setLog) {
   console.log("Log table cleared");
+}
+
+function LogTable(props) {
+  console.log(props.log.index);
+  const columns = [
+    { key: "id", name: "" },
+    { key: "clock", name: "" },
+    { key: "event", name: "" },
+  ];
+
+  const rows = [
+    { id: props.log.index, clock: props.log.clock, event: props.log.event },
+  ];
+
+  // const [rows, setRows] = useState(props.index);
+  return <DataGrid columns={columns} rows={rows} />;
 }
 
 export default function StopWatch() {
@@ -238,20 +178,32 @@ export default function StopWatch() {
     isDisabled: true,
   });
 
+  const [timeCount, setTimeCount] = useState(0);
+  const [log, setLog] = useState({
+    index: 0,
+    clock: "00:00:00:000",
+    event: "Init",
+  });
+
   return (
     <>
+      <Clock state={state} timeCount={timeCount} setTimeCount={setTimeCount} />
+
       <Button
         value={startButton.id}
         classEnabled={startButton.class}
         clickHandler={() =>
-          StartClicked(
+          startClicked(
             startButton,
             setStartButton,
             splitButton,
             setSplitButton,
             resetButton,
             setResetButton,
-            setState
+            setState,
+            timeCount,
+            log,
+            setLog
           )
         }
         type={startButton.type}
@@ -261,7 +213,10 @@ export default function StopWatch() {
       <Button
         value={splitButton.id}
         classEnabled={splitButton.class}
-        clickHandler={() => SplitClicked(splitButton, setSplitButton)}
+        clickHandler={() => {
+          splitClicked(splitButton, setSplitButton, timeCount, log, setLog);
+          setState("Split");
+        }}
         type={splitButton.type}
         isDisabled={splitButton.isDisabled}
       />
@@ -270,14 +225,14 @@ export default function StopWatch() {
         value={resetButton.id}
         classEnabled={resetButton.class}
         clickHandler={() => {
-          ResetClicked(resetButton, setResetButton);
+          resetClicked(resetButton, setResetButton, timeCount, log, setLog);
           setState("Reset");
         }}
         type={resetButton.type}
         isDisabled={resetButton.isDisabled}
       />
 
-      <Clock state={state} />
+      <LogTable log={log} />
     </>
   );
 }

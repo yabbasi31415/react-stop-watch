@@ -92,7 +92,9 @@ function startClicked(
   setState,
   timeCount,
   log,
-  setLog
+  setLog,
+  rows,
+  setRows
 ) {
   const setPause = () => {
     setStartButton({ ...startButton, id: "Pause", class: "enable-pause-btn" });
@@ -119,41 +121,48 @@ function startClicked(
       clock: Object.values(formatTime(timeCount)).join(":"),
       event: "Pause",
     });
+    console.log('Pause event: index: ' + log.index);
+    setRows([...rows, { id: log.index, clock: Object.values(formatTime(timeCount)).join(":"), event: 'Pause' }]);
   };
 
   startButton.id === "Start" ? setPause() : setStart();
 }
 
-function splitClicked(splitButton, setSplitButton, timeCount, log, setLog) {
+function splitClicked(
+  splitButton,
+  setSplitButton,
+  timeCount,
+  log,
+  setLog,
+  rows,
+  setRows
+) {
   setLog({
     index: log.index + 1,
     clock: Object.values(formatTime(timeCount)).join(":"),
     event: "Split",
   });
 
+  setRows([...rows, { id: log.index, clock: Object.values(formatTime(timeCount)).join(":"), event: 'Split' }]);
+
   console.log(
     "Log entry: " + log.index + " " + log.clock + " " + " " + log.event
   );
 }
 
-function resetClicked(resetButton, setResetButton, timeCount, log, setLog) {
+function resetClicked(resetButton, setResetButton, timeCount, log, setLog, rows, setRows) {
   console.log("Log table cleared");
+  setRows({ id: 0, clock: '', event: '' },);
 }
 
 function LogTable(props) {
-  console.log(props.log.index);
   const columns = [
     { key: "id", name: "" },
     { key: "clock", name: "" },
     { key: "event", name: "" },
   ];
 
-  const rows = [
-    { id: props.log.index, clock: props.log.clock, event: props.log.event },
-  ];
-
-  // const [rows, setRows] = useState(props.index);
-  return <DataGrid columns={columns} rows={rows} />;
+  return <DataGrid columns={columns} rows={props.rows} />;
 }
 
 export default function StopWatch() {
@@ -179,14 +188,22 @@ export default function StopWatch() {
   });
 
   const [timeCount, setTimeCount] = useState(0);
+
   const [log, setLog] = useState({
     index: 0,
     clock: "00:00:00:000",
     event: "Init",
   });
 
+  const [rows, setRows] = useState([
+    { id: 0, clock: '', event: '' },
+  ]);
+
+  
+
   return (
     <>
+
       <Clock state={state} timeCount={timeCount} setTimeCount={setTimeCount} />
 
       <Button
@@ -203,7 +220,9 @@ export default function StopWatch() {
             setState,
             timeCount,
             log,
-            setLog
+            setLog,
+            rows,
+            setRows
           )
         }
         type={startButton.type}
@@ -214,7 +233,15 @@ export default function StopWatch() {
         value={splitButton.id}
         classEnabled={splitButton.class}
         clickHandler={() => {
-          splitClicked(splitButton, setSplitButton, timeCount, log, setLog);
+          splitClicked(
+            splitButton,
+            setSplitButton,
+            timeCount,
+            log,
+            setLog,
+            rows,
+            setRows
+          );
           setState("Split");
         }}
         type={splitButton.type}
@@ -225,14 +252,22 @@ export default function StopWatch() {
         value={resetButton.id}
         classEnabled={resetButton.class}
         clickHandler={() => {
-          resetClicked(resetButton, setResetButton, timeCount, log, setLog);
+          resetClicked(
+            resetButton,
+            setResetButton,
+            timeCount,
+            log,
+            setLog,
+            rows,
+            setRows
+          );
           setState("Reset");
         }}
         type={resetButton.type}
         isDisabled={resetButton.isDisabled}
       />
 
-      <LogTable log={log} />
+      <LogTable rows={rows} />
     </>
   );
 }
@@ -240,3 +275,6 @@ export default function StopWatch() {
 function pad(val) {
   return val > 9 ? val : "0" + val;
 }
+
+
+//context API

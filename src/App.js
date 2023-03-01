@@ -1,5 +1,11 @@
 import "./App.css";
-import { useEffect, useState, createContext, useContext } from "react";
+import {
+  useEffect,
+  useState,
+  createContext,
+  useContext,
+  useReducer,
+} from "react";
 import "react-data-grid/lib/styles.css";
 import DataGrid from "react-data-grid";
 
@@ -7,14 +13,13 @@ const UserContext = createContext(undefined);
 const UserDispatchContext = createContext(undefined);
 
 function UserProvider({ children }) {
-  const [buttonDetails, setButtonDetails] = useState({
+  const defaultState = {
     clicked: "none",
     timeCount: 0,
     start: {
       id: "Start",
       class: "enable-start-btn",
       isDisabled: false,
-      clickHandler: startClicked,
     },
     split: {
       id: "Split",
@@ -24,28 +29,49 @@ function UserProvider({ children }) {
     reset: {
       id: "Reset",
       class: "enable-reset-btn",
-      isDisabled: false,
-      clickHandler: resetClicked,
+      isDisabled: true,
     },
-  });
+  };
 
-  function startClicked() {
-    console.log("start clicked");
-    buttonDetails.clicked = "start";
-    console.log(buttonDetails);
-    return;
-  }
-
-  function resetClicked() {
-    console.log("reset clicked");
-    buttonDetails.clicked = "reset";
-    console.log(buttonDetails);
-    return;
-  }
+  const [watchButtons, dispatch] = useReducer((state, action) => {
+    switch (action) {
+      case "Start":
+        console.log("Start clicked");
+        return {
+          ...state,
+          start: { ...state.start, id: "Pause", class: "enable-pause-btn" },
+          clicked: "start",
+          split: { ...state.split, isDisabled: false },
+          reset: { ...state.reset, isDisabled: true },
+        };
+      case "Pause":
+        console.log("Start clicked");
+        return {
+          ...state,
+          start: { ...state.start, id: "Start", class: "enable-start-btn" },
+          clicked: "pause",
+          split: { ...state.split, isDisabled: true },
+          reset: { ...state.reset, isDisabled: false },
+        };
+      case "Split":
+        console.log("Split clicked");
+        return { ...state, clicked: "split" };
+      case "Reset":
+        console.log("Reset clicked");
+        return { ...state, clicked: "reset" };
+      case "IncrementCount":
+        return {
+          ...state,
+          timeCount: setTimeCount(state.timeCount, state.clicked),
+        };
+      default:
+        return state;
+    }
+  }, defaultState);
 
   return (
-    <UserContext.Provider value={buttonDetails}>
-      <UserDispatchContext.Provider value={setButtonDetails}>
+    <UserContext.Provider value={watchButtons}>
+      <UserDispatchContext.Provider value={dispatch}>
         {children}
       </UserDispatchContext.Provider>
     </UserContext.Provider>
@@ -66,51 +92,35 @@ export default function StopWatch() {
 }
 
 const Button = (props) => {
-  const buttonDetails = useContext(UserContext);
-  const setButtonDetails = useContext(UserDispatchContext);
+  const state = useContext(UserContext);
+  const dispatch = useContext(UserDispatchContext);
 
-  const btnEnableDisable = !buttonDetails[props.name].isDisabled
-    ? buttonDetails[props.name].class
+  const btnEnableDisable = !state[props.name].isDisabled
+    ? state[props.name].class
     : "btn-disabled";
 
   return (
     <button
-      id={buttonDetails[props.name].id}
+      id={state[props.name].id}
       className={`btn ${btnEnableDisable}`}
-      onClick={buttonDetails[props.name].clickHandler}
-      disabled={buttonDetails[props.name].isDisabled}
+      onClick={() => dispatch(state[props.name].id)}
+      disabled={state[props.name].isDisabled}
     >
-      {buttonDetails[props.name].id}
+      {state[props.name].id}
     </button>
   );
 };
 
 const Clock = () => {
-  const buttonDetails = useContext(UserContext);
-  const setButtonDetails = useContext(UserDispatchContext);
-
-  // console.log("Pre clock: buttonDetails: " + buttonDetails.clicked + " timeCount: " + buttonDetails.timeCount);
+  const state = useContext(UserContext);
+  const dispatch = useContext(UserDispatchContext);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setButtonDetails({
-        ...buttonDetails,
-        timeCount: setTimeCount(buttonDetails.timeCount, buttonDetails.clicked)
-      });
-
-      console.log("In clock: buttonDetails: " + buttonDetails.clicked + " timeCount: " + buttonDetails.timeCount);
-    }, 1000);
+      dispatch("IncrementCount");
+    }, 1);
     return () => clearInterval(interval);
-  }, [buttonDetails, setButtonDetails]);
-
-  function setTimeCount(count, action) {
-    if (action === "start" || action === "split") {
-      count = count + 1;
-    } else if (action === "reset") {
-      count = 0;
-    }
-    return count;
-  }
+  }, [state, dispatch]);
 
   return (
     <>
@@ -150,6 +160,15 @@ function SetMiniDisplay() {
       </p>
     </>
   );
+}
+
+function setTimeCount(count, action) {
+  if (action === "start" || action === "split") {
+    count = count + 1;
+  } else if (action === "reset") {
+    count = 0;
+  }
+  return count;
 }
 
 function formatTime(timeCount) {

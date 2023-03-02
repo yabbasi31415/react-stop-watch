@@ -31,6 +31,8 @@ function UserProvider({ children }) {
       class: "enable-reset-btn",
       isDisabled: true,
     },
+    log: { id: 0, clock: "", event: "" },
+    logRow: [],
   };
 
   const [watchButtons, dispatch] = useReducer((state, action) => {
@@ -52,13 +54,37 @@ function UserProvider({ children }) {
           clicked: "pause",
           split: { ...state.split, isDisabled: true },
           reset: { ...state.reset, isDisabled: false },
+          log: {
+            id: state.log.id + 1,
+            clock: Object.values(formatTime(state.timeCount)).join(":"),
+            event: "Pause",
+          },
+          logRow: [...state.logRow, state.log],
         };
       case "Split":
         console.log("Split clicked");
-        return { ...state, clicked: "split" };
+        return {
+          ...state,
+          clicked: "split",
+          log: {
+            id: state.log.id + 1,
+            clock: Object.values(formatTime(state.timeCount)).join(":"),
+            event: "Split",
+          },
+          logRow: [...state.logRow, state.log],
+        };
       case "Reset":
         console.log("Reset clicked");
-        return { ...state, clicked: "reset" };
+        return {
+          ...state,
+          clicked: "reset",
+          log: {
+            id: 0,
+            clock: "",
+            event: "",
+          },
+          logRow: state.logRow.splice(0, state.logRow.length),
+        };
       case "IncrementCount":
         return {
           ...state,
@@ -131,8 +157,8 @@ const Clock = () => {
 };
 
 function SetDisplay() {
-  const buttonDetails = useContext(UserContext);
-  let { hrs, min, sec, ms } = formatTime(buttonDetails.timeCount);
+  const state = useContext(UserContext);
+  let { hrs, min, sec, ms } = formatTime(state.timeCount);
 
   return (
     <>
@@ -146,12 +172,12 @@ function SetDisplay() {
 }
 
 function SetMiniDisplay() {
-  const buttonDetails = useContext(UserContext);
+  const state = useContext(UserContext);
 
-  if (buttonDetails.clicked === "none")
+  if (state.clicked === "none")
     return <p className="secondary-display">SPLIT TIME</p>;
 
-  let { hrs, min, sec, ms } = formatTime(buttonDetails.timeCount);
+  let { hrs, min, sec, ms } = formatTime(state.timeCount);
 
   return (
     <>

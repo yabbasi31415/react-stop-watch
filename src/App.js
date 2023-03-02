@@ -31,7 +31,7 @@ function UserProvider({ children }) {
       class: "enable-reset-btn",
       isDisabled: true,
     },
-    log: { id: 0, clock: "", event: "" },
+    logIndex: 1,
     logRow: [],
   };
 
@@ -54,35 +54,37 @@ function UserProvider({ children }) {
           clicked: "pause",
           split: { ...state.split, isDisabled: true },
           reset: { ...state.reset, isDisabled: false },
-          log: {
-            id: state.log.id + 1,
-            clock: Object.values(formatTime(state.timeCount)).join(":"),
-            event: "Pause",
-          },
-          logRow: [...state.logRow, state.log],
+          logIndex: state.logIndex + 1,
+          logRow: [
+            ...state.logRow,
+            {
+              id: state.logIndex,
+              clock: Object.values(formatTime(state.timeCount)).join(":"),
+              event: "Pause",
+            },
+          ],
         };
       case "Split":
         console.log("Split clicked");
         return {
           ...state,
           clicked: "split",
-          log: {
-            id: state.log.id + 1,
-            clock: Object.values(formatTime(state.timeCount)).join(":"),
-            event: "Split",
-          },
-          logRow: [...state.logRow, state.log],
+          logIndex: state.logIndex + 1,
+          logRow: [
+            ...state.logRow,
+            {
+              id: state.logIndex,
+              clock: Object.values(formatTime(state.timeCount)).join(":"),
+              event: "Split",
+            },
+          ],
         };
       case "Reset":
         console.log("Reset clicked");
         return {
           ...state,
           clicked: "reset",
-          log: {
-            id: 0,
-            clock: "",
-            event: "",
-          },
+          logIndex: 1,
           logRow: state.logRow.splice(0, state.logRow.length),
         };
       case "IncrementCount":
@@ -112,9 +114,23 @@ export default function StopWatch() {
         <Button name={"start"} />
         <Button name={"split"} />
         <Button name={"reset"} />
+        <LogTable />
       </UserProvider>
     </>
   );
+}
+
+function LogTable() {
+  const state = useContext(UserContext);
+  let rows = state.logRow;
+
+  const columns = [
+    { key: "id", name: "" },
+    { key: "clock", name: "" },
+    { key: "event", name: "" },
+  ];
+
+  return <DataGrid columns={columns} rows={rows} />;
 }
 
 const Button = (props) => {

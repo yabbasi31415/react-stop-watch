@@ -1,9 +1,5 @@
 import "./App.css";
-import {
-  useEffect,
-} from "react";
-import "react-data-grid/lib/styles.css";
-import DataGrid from "react-data-grid";
+import { useEffect } from "react";
 import {
   StopWatchContextProvider,
   useStopWatchContext,
@@ -15,33 +11,50 @@ export default function StopWatch() {
     <>
       <StopWatchContextProvider>
         <div className="main">
-
-        <Clock />
-        <div className="actions">
-        <Button name={"start"} />
-        <Button name={"split"} />
-        <Button name={"reset"} />
-
-        </div>
-        <LogTable />
+          <Clock />
+          <Buttons />
+          <LogTable />
         </div>
       </StopWatchContextProvider>
     </>
   );
 }
 
-function LogTable() {
-  const [{logRow: rows}] = useStopWatchContext();
-  const columns = [
-    { key: "id", name: "" },
-    { key: "clock", name: "" },
-    { key: "event", name: "" },
-  ];
-
-  return <DataGrid columns={columns} rows={rows} />;
+function Buttons() {
+  return (
+    <div className="button-actions">
+      <Button name={"start"} />
+      <Button name={"split"} />
+      <Button name={"reset"} />
+    </div>
+  );
 }
 
-const Button = ({name}) => {
+function LogTable() {
+  const [{ logRow, logIndex }] = useStopWatchContext();
+
+  return (
+    <>
+      <div className="grid-container">
+        {logRow.map((logRow, index) => (
+          <>
+            <div className="grid-item" key={logIndex}>
+              {logRow.id}
+            </div>
+            <div className="grid-item" key={logRow.clock}>
+              {logRow.clock}
+            </div>
+            <div className="grid-item" key={logRow.event + toString(logIndex)}>
+              {logRow.event}
+            </div>
+          </>
+        ))}
+      </div>
+    </>
+  );
+}
+
+const Button = ({ name }) => {
   const [state, dispatch] = useStopWatchContext();
   const btnEnableDisable = !state[name].isDisabled
     ? state[name].class
@@ -84,8 +97,7 @@ function SetDisplay() {
   return (
     <>
       <p>
-        <span>{hrs}</span>:<span>{min}</span>:<span>{sec}</span>.
-        <span>{ms % 10}</span>
+        {hrs}:{min}:{sec}.{ms % 10}
         <span className="subscript-timer">{ms % 100}</span>
       </p>
     </>

@@ -10,7 +10,7 @@ export const StyledButton = styled.button`
   font-size: 24px;
   margin: 4px 8px;
 
-  background-color: ${(props) => setColor(props.clicked, props.disabledStatus)};
+  background-color: ${(props) => setColor(props.clicked, props.disabled)};
 `;
 
 function setColor(buttonName, status) {
